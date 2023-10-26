@@ -1,5 +1,11 @@
 module.exports = function(app, shopData) {
 
+    const redirectLogin = (req, res, next) => {
+        if (!req.session.userId ) {
+          res.redirect('./login')
+        } else { next (); }
+    }
+
     // Handle our routes
     app.get('/',function(req,res){
         res.render('index.ejs', shopData)
@@ -77,6 +83,8 @@ module.exports = function(app, shopData) {
                     res.send(err.message);
                 }
                 else if(result == true) {
+                    // Save user session here, when login is successful
+                    req.session.userId = req.body.username;
                     res.send("Successfully logged in!")
                 }
                 else {
@@ -86,7 +94,16 @@ module.exports = function(app, shopData) {
         })
     })
 
-    app.get('/deleteuser', function(req, res) {
+    app.get('/logout', redirectLogin, (req,res) => {
+        req.session.destroy(err => {
+        if (err) {
+          return res.redirect('./')
+        }
+        res.send('you are now logged out. <a href='+'./'+'>Home</a>');
+        })
+    })
+
+    app.get('/deleteuser', redirectLogin, function(req, res) {
         res.render('deleteuser.ejs', shopData);
     });
 
@@ -102,7 +119,7 @@ module.exports = function(app, shopData) {
         })
     })
 
-    app.get('/list', function(req, res) {
+    app.get('/list', redirectLogin, function(req, res) {
         let sqlquery = "SELECT * FROM books"; // query database to get all the books
         // execute sql query
         db.query(sqlquery, (err, result) => {
@@ -115,7 +132,7 @@ module.exports = function(app, shopData) {
          });
     });
 
-    app.get('/listusers', function(req, res) {
+    app.get('/listusers', redirectLogin, function(req, res) {
         let sqlquery = "SELECT * FROM logins";
         db.query(sqlquery, (err, result) => {
             if (err) {
@@ -127,7 +144,7 @@ module.exports = function(app, shopData) {
         });
     });
 
-    app.get('/addbook', function (req, res) {
+    app.get('/addbook', redirectLogin, function (req, res) {
         res.render('addbook.ejs', shopData);
      });
  
